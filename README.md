@@ -74,6 +74,12 @@ build/
     └── NCP_Storage_Manager
 ```
 
+### 빌드 실패 시
+1. Python 버전 확인 (>=3.8)
+2. 의존성 재설치: `pip install -r requirements.txt --force-reinstall`
+3. 빌드 캐시 정리: `python build.py --clean`
+
+
 ## 설정
 
 첫 실행 시 각 스토리지 서비스의 인증 정보를 입력해야 합니다:
@@ -88,9 +94,15 @@ build/
 - Access Key ID
 - Secret Key
 
-설정은 `config.json` 파일에 저장됩니다.
+인증 내용은 .exe 파일과 같은 경로의 `config.json` 파일에 저장되며 재시작 시 자동으로 불러와 집니다.
 
-### 빌드 실패 시
-1. Python 버전 확인 (>=3.8)
-2. 의존성 재설치: `pip install -r requirements.txt --force-reinstall`
-3. 빌드 캐시 정리: `python build.py --clean`
+
+## 사용 방법
+
+### Archive Storage
+비용 저렴
+
+### Object Storage
+마운트 가능
+
+### NCloud Storage
