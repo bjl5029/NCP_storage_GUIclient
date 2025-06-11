@@ -1,6 +1,6 @@
 # NCP Storage Manager
 
-네이버 클라우드 플랫폼의 스토리지 서비스를 통합 관리할 수 있는 GUI 애플리케이션.
+NCP의 스토리지 서비스를 관리하는 GUI 애플리케이션.
 
 ## 지원 서비스
 
@@ -12,7 +12,7 @@
 
 - Python 3.8 이상
 - PyQt6
-- 지원 운영체제: Windows 10+, macOS 10.13+, Ubuntu 18.04+
+- 운영체제: Windows 10+, macOS 10.13+, Ubuntu 18.04+(GUI)
 
 ## 빌드 방법
 
