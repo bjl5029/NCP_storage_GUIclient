@@ -25,18 +25,33 @@ class ConsoleOutput:
 
     def write(self, text):
         if text.strip():
-            self.text_widget.append(text.strip())
-            scrollbar = self.text_widget.verticalScrollBar()
-            scrollbar.setValue(scrollbar.maximum())
-            QApplication.processEvents()
-        self.original_stdout.write(text)
+            try:
+                self.text_widget.append(text.strip())
+                scrollbar = self.text_widget.verticalScrollBar()
+                scrollbar.setValue(scrollbar.maximum())
+                QApplication.processEvents()
+            except Exception:
+                pass  # GUI가 없거나 오류 발생 시 무시
+        
+        # PyInstaller로 빌드된 exe에서는 original_stdout이 None일 수 있음
+        if self.original_stdout is not None:
+            try:
+                self.original_stdout.write(text)
+            except Exception:
+                pass  # 콘솔 출력 실패 시 무시
 
     def flush(self):
-        pass
+        if self.original_stdout is not None:
+            try:
+                self.original_stdout.flush()
+            except Exception:
+                pass
 
     def restore(self):
-        sys.stdout = self.original_stdout
-        sys.stderr = self.original_stderr
+        if self.original_stdout is not None:
+            sys.stdout = self.original_stdout
+        if self.original_stderr is not None:
+            sys.stderr = self.original_stderr
 
 class StorageTypeSelectionDialog(QDialog):
 
@@ -857,11 +872,24 @@ class IntegratedStorageGUI(QMainWindow):
 
         self.main_tab_widget.currentChanged.connect(self.on_storage_type_changed)
 
-        self.console_output = ConsoleOutput(self.console_text)
-        sys.stdout = self.console_output
-        sys.stderr = self.console_output
+        try:
+            self.console_output = ConsoleOutput(self.console_text)
+            sys.stdout = self.console_output
+            sys.stderr = self.console_output
+        except Exception as e:
+            # 콘솔 리다이렉션 실패 시에도 계속 진행
+            self.console_output = None
+            if sys.stdout is not None:
+                try:
+                    print(f"콘솔 리다이렉션 실패: {str(e)}")
+                except Exception:
+                    pass
 
-        print("네이버 클라우드 통합 Storage GUI가 시작되었습니다.")
+        # 안전하게 메시지 출력
+        try:
+            print("네이버 클라우드 통합 Storage GUI가 시작되었습니다.")
+        except Exception:
+            pass
 
     def select_initial_storage_type(self):
 
@@ -2461,8 +2489,11 @@ class IntegratedStorageGUI(QMainWindow):
                     self.upload_thread.wait(1000)
             
             # 콘솔 출력 복원
-            if hasattr(self, 'console_output'):
-                self.console_output.restore()
+            if hasattr(self, 'console_output') and self.console_output is not None:
+                try:
+                    self.console_output.restore()
+                except Exception:
+                    pass
             
             # 애플리케이션 완전 종료
             QApplication.quit()
@@ -2506,6 +2537,7 @@ class IntegratedStorageGUI(QMainWindow):
         return "STANDARD" if "STANDARD" in item else "DEEP_ARCHIVE"
 
 def main():
+    app = None
     try:
         app = QApplication(sys.argv)
         app.setApplicationName("네이버 클라우드 통합 Storage GUI Client")
@@ -2521,9 +2553,30 @@ def main():
         sys.exit(app.exec())
 
     except Exception as e:
-        print(f"애플리케이션 실행 오류: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        error_msg = f"애플리케이션 실행 오류: {str(e)}"
+        
+        # 콘솔 출력이 가능한 경우에만 출력
+        if sys.stdout is not None:
+            try:
+                print(error_msg)
+                import traceback
+                traceback.print_exc()
+            except Exception:
+                pass
+        
+        # GUI가 초기화된 경우 에러 다이얼로그 표시
+        if app is not None:
+            try:
+                from PyQt6.QtWidgets import QMessageBox
+                msg_box = QMessageBox()
+                msg_box.setIcon(QMessageBox.Icon.Critical)
+                msg_box.setWindowTitle("오류")
+                msg_box.setText("애플리케이션 실행 중 오류가 발생했습니다.")
+                msg_box.setDetailedText(str(e))
+                msg_box.exec()
+            except Exception:
+                pass
+        
         sys.exit(1)
 
 if __name__ == "__main__":
