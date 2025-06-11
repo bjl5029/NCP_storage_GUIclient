@@ -31,7 +31,6 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('config.json', '.'),
     ],
     hiddenimports=[
         'PyQt6.QtCore',

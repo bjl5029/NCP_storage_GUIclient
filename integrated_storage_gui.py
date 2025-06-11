@@ -346,22 +346,34 @@ class StorageConnectionDialog(QDialog):
         try:
             config_file = 'config.json'
             
-            if os.path.exists(config_file):
-                with open(config_file, 'r', encoding='utf-8') as f:
-                    all_config = json.load(f)
+            if not os.path.exists(config_file):
+                print(f"설정 파일이 없습니다. 새로 생성됩니다: {config_file}")
+                return
                 
-                # 스토리지 유형별 설정 가져오기
-                storage_config = all_config.get(self.storage_type, {})
+            with open(config_file, 'r', encoding='utf-8') as f:
+                all_config = json.load(f)
+            
+            # 스토리지 유형별 설정 가져오기
+            if not isinstance(all_config, dict):
+                print("설정 파일 형식이 올바르지 않습니다. 새로 생성됩니다.")
+                return
                 
-                if self.storage_type == 'archive':
-                    self.access_key_edit.setText(storage_config.get('access_key_id', ''))
-                    self.secret_key_edit.setText(storage_config.get('secret_key', ''))
-                    self.domain_id_edit.setText(storage_config.get('domain_id', ''))
-                    self.project_id_edit.setText(storage_config.get('project_id', ''))
-                else:
-                    self.access_key_edit.setText(storage_config.get('access_key', ''))
-                    self.secret_key_edit.setText(storage_config.get('secret_key', ''))
+            storage_config = all_config.get(self.storage_type, {})
+            
+            if self.storage_type == 'archive':
+                self.access_key_edit.setText(storage_config.get('access_key_id', ''))
+                self.secret_key_edit.setText(storage_config.get('secret_key', ''))
+                self.domain_id_edit.setText(storage_config.get('domain_id', ''))
+                self.project_id_edit.setText(storage_config.get('project_id', ''))
+            else:
+                self.access_key_edit.setText(storage_config.get('access_key', ''))
+                self.secret_key_edit.setText(storage_config.get('secret_key', ''))
+                
+            if storage_config:
+                print(f"{self.get_storage_name()} 설정을 불러왔습니다.")
                     
+        except json.JSONDecodeError as e:
+            print(f"설정 파일 JSON 형식 오류: {str(e)}. 새로 생성됩니다.")
         except Exception as e:
             print(f"설정 로드 오류: {str(e)}")
 
